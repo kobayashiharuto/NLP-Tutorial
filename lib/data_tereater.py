@@ -6,7 +6,6 @@
 # from tqdm import tqdm
 # from tensorflow.keras.preprocessing.sequence import pad_sequences
 # from tensorflow.keras.preprocessing.text import Tokenizer
-# import string
 # import gensim
 # from nltk.tokenize import word_tokenize
 # from nltk.corpus import stopwords
