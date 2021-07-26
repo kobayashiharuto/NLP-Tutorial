@@ -38,31 +38,6 @@ train = pd.read_csv('data/train.csv')
 test = pd.read_csv('data/test.csv')
 
 
-def cleaned_text(text):
-    text = re.sub("http\S+", "", text)
-    text = re.sub("pic.twitter\S+", "", text)
-    text = re.sub("@\S+", "", text)
-    text = re.sub('#', '', text)
-    text = re.sub('goooooooaaaaaal', 'goal', text)
-    text = re.sub('SOOOO', 'SO', text)
-    text = re.sub('LOOOOOOL', 'LOL', text)
-    text = re.sub('Cooool', 'cool', text)
-    text = re.sub('|', '', text)
-    text = re.sub(r'\?{2,}', '? ', text)
-    text = re.sub(r'\.{2,}', '. ', text)
-    text = re.sub(r'\!{2,}', '! ', text)
-    text = re.sub('&amp;', '&', text)
-    text = re.sub('Comin', 'Coming', text)
-    text = re.sub('&gt;', '> ', text)
-    text = re.sub('&lt;', '< ', text)
-    text = re.sub(r'.:', '', text)
-    text = re.sub('baaaack', 'back', text)
-    text = re.sub('RT', '', text)
-    text = re.sub('\s{2,}', ' ', text)
-    text = text.lower()
-    return text
-
-
 def remove_punct(text):
     table = str.maketrans('', '', string.punctuation)
     return text.translate(table)
@@ -90,8 +65,15 @@ def remove_emoji(text):
     return emoji_pattern.sub(r'', text)
 
 
+spell = SpellChecker()
+index = 0
+
+
 def correct_spellings(text):
-    spell = SpellChecker()
+    global index
+    global spell
+    index += 1
+    print(index)
     corrected_text = []
     misspelled_words = spell.unknown(text.split())
     for word in text.split():
@@ -102,9 +84,14 @@ def correct_spellings(text):
     return " ".join(corrected_text)
 
 
+# 使用例
+print(correct_spellings("corect me plese"))  # correct me plese
+
 df = pd.concat([train, test])
 df['text'] = df['text'].apply(lambda x: remove_emoji(x))
 df['text'] = df['text'].apply(lambda x: remove_html(x))
 df['text'] = df['text'].apply(lambda x: remove_URL(x))
 df['text'] = df['text'].apply(lambda x: remove_punct(x))
 df['text'] = df['text'].apply(lambda x: correct_spellings(x))
+
+df.to_csv('data/treated.csv')
