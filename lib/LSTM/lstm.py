@@ -9,11 +9,16 @@ import pandas as pd
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from nltk.util import ngrams
-from tensorflow.python.keras.backend import constant
+from tensorflow.keras.initializers import Constant
 from tqdm import tqdm
+import nltk
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.preprocessing.text import Tokenizer
 import numpy as np
+from sklearn.model_selection import train_test_split
+
+
+nltk.download('punkt')
 
 
 def plot_graphs(history, metric):
@@ -29,10 +34,12 @@ df = pd.read_csv('data/treated.csv')
 
 
 def create_corpus(texts):
+    # ストップワードを取得
+    stop = stopwords.words('english')
     corpus = []
     for text in tqdm(texts):
         words = [word.lower() for word in word_tokenize(text) if(
-            (word.isalpha() == 1) & (word not in stopwords))]
+            (word.isalpha() == 1) & (word not in stop))]
         corpus.append(words)
     return corpus
 
@@ -42,7 +49,7 @@ corpus = create_corpus(df['text'])
 
 # 埋め込み用の辞書を取得
 embedding_dict = {}
-with open('C:/Users/owner/Desktop/NLP/DATA/glove/glove.6B.100d.txt', 'r') as f:
+with open('C:/Users/owner/Desktop/NLP/DATA/glove/glove.6B.100d.txt', 'r', encoding='UTF-8') as f:
     for line in f:
         values = line.split()
         word = values[0]
@@ -65,10 +72,6 @@ embedding_matrix = np.zeros((num_words, 100))
 
 # 単語を回しながらシーケンス番号に対応したベクトル表現のリストを作成する
 for word, i in tqdm(word_index.items()):
-    if i > num_words:
-        print(f'Really? {word} is No.{i}')
-        continue
-
     emb_vec = embedding_dict.get(word)
     if emb_vec is not None:
         embedding_matrix[i] = emb_vec
@@ -82,10 +85,10 @@ texts_pad = pad_sequences(sequences, maxlen=MAX_LEN,
 
 # 埋め込み層を含むモデルを作成
 model = Sequential([
-    Embedding(num_words, 100, embeddings_initializer=constant(
+    Embedding(num_words, 100, embeddings_initializer=Constant(
         embedding_matrix), input_length=MAX_LEN, trainable=False),
     SpatialDropout1D(0.2),
-    LSTM(64, dropout=0.2, recurrent_dropout=0.2),
+    LSTM(64),
     Dense(1, activation='sigmoid')
 ])
 
@@ -96,3 +99,23 @@ model.compile(loss='binary_crossentropy',
               optimizer=optimzer, metrics=['accuracy'])
 
 model.summary()
+
+train_df = pd.read_csv('data/train.csv')
+train_data = texts_pad[:train_df['text'].shape[0]]
+train_label = train_df['target']
+test_data = texts_pad[train_df['text'].shape[0]:]
+
+X_train, X_test, y_train, y_test = train_test_split(
+    train_data, train_label, test_size=0.15)
+print('Shape of train', X_train.shape)
+print("Shape of Validation ", X_test.shape)
+
+history = model.fit(X_train, y_train, batch_size=4, epochs=15,
+                    validation_data=(X_test, y_test))
+
+
+predict = model.predict(test_data)
+predict = np.round(predict).astype(int).reshape(3263)
+test_df = pd.read_csv('data/test.csv')
+sub = pd.DataFrame({'id': test_df['id'].values.tolist(), 'target': predict})
+sub.to_csv('result/result.csv', index=False)
