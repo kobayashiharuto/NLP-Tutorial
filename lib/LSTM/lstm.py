@@ -1,6 +1,7 @@
-import tensorflow_datasets as tfds
 import tensorflow as tf
+from tensorflow.keras.layers import Embedding, LSTM, Dense, Bidirectional
 import matplotlib.pyplot as plt
+import pandas as pd
 
 
 def plot_graphs(history, metric):
@@ -12,27 +13,17 @@ def plot_graphs(history, metric):
     plt.show()
 
 
-dataset, info = tfds.load('imdb_reviews/subwords8k', with_info=True,
-                          as_supervised=True)
-train_examples, test_examples = dataset['train'], dataset['test']
+train = pd.read_csv('data/train.csv')
+test = pd.read_csv('data/test.csv')
+train_df, test_df = train_test_split(
+    data, test_size=0.2, random_state=42, shuffle=True)
 
-encoder = info.features['text'].encoder
-
-BUFFER_SIZE = 10000
-BATCH_SIZE = 64
-
-train_dataset = (train_examples
-                 .shuffle(BUFFER_SIZE)
-                 .padded_batch(BATCH_SIZE))
-
-test_dataset = (test_examples
-                .padded_batch(BATCH_SIZE))
 
 model = tf.keras.Sequential([
-    tf.keras.layers.Embedding(encoder.vocab_size, 64),
-    tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(64)),
-    tf.keras.layers.Dense(64, activation='relu'),
-    tf.keras.layers.Dense(1)
+    Embedding(encoder.vocab_size, 64),
+    Bidirectional(LSTM(64)),
+    Dense(64, activation='relu'),
+    Dense(1)
 ])
 
 model.compile(
