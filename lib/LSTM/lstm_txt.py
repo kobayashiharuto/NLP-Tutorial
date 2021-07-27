@@ -18,7 +18,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 
 
-nltk.download('punkt')
+# nltk.download('punkt')
 
 
 def plot_graphs(history, metric):
@@ -92,7 +92,6 @@ model = Sequential([
     Dense(1, activation='sigmoid')
 ])
 
-
 optimzer = Adam(learning_rate=1e-5)
 
 model.compile(loss='binary_crossentropy',
@@ -101,21 +100,20 @@ model.compile(loss='binary_crossentropy',
 model.summary()
 
 train_df = pd.read_csv('data/train.csv')
-train_data = texts_pad[:train_df['text'].shape[0]]
+train_text = texts_pad[:train_df['text'].shape[0]]
 train_label = train_df['target']
-test_data = texts_pad[train_df['text'].shape[0]:]
+test_text = texts_pad[train_df['text'].shape[0]:]
 
 X_train, X_test, y_train, y_test = train_test_split(
-    train_data, train_label, test_size=0.15)
-print('Shape of train', X_train.shape)
-print("Shape of Validation ", X_test.shape)
+    train_text, train_label, test_size=0.15)
 
 history = model.fit(X_train, y_train, batch_size=4, epochs=15,
                     validation_data=(X_test, y_test))
 
 
-predict = model.predict(test_data)
+predict = model.predict(test_text)
 predict = np.round(predict).astype(int).reshape(3263)
 test_df = pd.read_csv('data/test.csv')
 sub = pd.DataFrame({'id': test_df['id'].values.tolist(), 'target': predict})
 sub.to_csv('result/result.csv', index=False)
+

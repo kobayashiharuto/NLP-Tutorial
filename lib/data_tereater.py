@@ -1,15 +1,3 @@
-# from tensorflow.keras.layers import Embedding, LSTM, Dense, SpatialDropout1D
-# from tensorflow.keras.optimizers import Adam
-# from sklearn.model_selection import train_test_split
-# from tensorflow.keras.initializers import Constant
-# from tensorflow.keras.models import Sequential
-# from tqdm import tqdm
-# from tensorflow.keras.preprocessing.sequence import pad_sequences
-# from tensorflow.keras.preprocessing.text import Tokenizer
-# import gensim
-# from nltk.tokenize import word_tokenize
-# from nltk.corpus import stopwords
-# from nltk.util import ngrams
 from spellchecker import SpellChecker
 import re
 import os
