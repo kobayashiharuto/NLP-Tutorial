@@ -1,43 +1,22 @@
-from spellchecker import SpellChecker
-import re
-import os
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-import numpy as np
-from sklearn.feature_extraction.text import CountVectorizer
-from collections import defaultdict
-from collections import Counter
-import itertools
-import string
+import gensim.parsing.preprocessing as gsp
+import re
 
 
-def plot_graphs(history, metric):
-    plt.plot(history.history[metric])
-    plt.plot(history.history['val_'+metric], '')
-    plt.xlabel("Epochs")
-    plt.ylabel(metric)
-    plt.legend([metric, 'val_'+metric])
-    plt.show()
-
-
-train = pd.read_csv('data/train.csv')
-test = pd.read_csv('data/test.csv')
-
-
-def remove_punct(text):
-    table = str.maketrans('', '', string.punctuation)
-    return text.translate(table)
+filters = [
+    gsp.strip_tags,
+    gsp.strip_punctuation,
+    gsp.strip_multiple_whitespaces,
+    gsp.strip_numeric,
+    gsp.remove_stopwords,
+    gsp.strip_short,
+    gsp.stem_text
+]
 
 
 def remove_URL(text):
     url = re.compile(r'https?://\S+|www\.\S+')
     return url.sub(r'', text)
-
-
-def remove_html(text):
-    html = re.compile(r'<.*?>')
-    return html.sub(r'', text)
 
 
 def remove_emoji(text):
@@ -52,33 +31,20 @@ def remove_emoji(text):
     return emoji_pattern.sub(r'', text)
 
 
-spell = SpellChecker()
-index = 0
+def clean_text(text):
+    text = text.lower()
+    text = remove_URL(text)
+    text = remove_emoji(text)
+    for f in filters:
+        text = f(text)
+    return text
 
 
-def correct_spellings(text):
-    global index
-    global spell
-    index += 1
-    print(index)
-    corrected_text = []
-    misspelled_words = spell.unknown(text.split())
-    for word in text.split():
-        if word in misspelled_words:
-            corrected_text.append(spell.correction(word))
-        else:
-            corrected_text.append(word)
-    return " ".join(corrected_text)
-
-
-# 使用例
-print(correct_spellings("corect me plese"))  # correct me plese
+train = pd.read_csv('data/train.csv')
+test = pd.read_csv('data/test.csv')
 
 df = pd.concat([train, test])
-df['text'] = df['text'].apply(lambda x: remove_emoji(x))
-df['text'] = df['text'].apply(lambda x: remove_html(x))
-df['text'] = df['text'].apply(lambda x: remove_URL(x))
-df['text'] = df['text'].apply(lambda x: remove_punct(x))
-df['text'] = df['text'].apply(lambda x: correct_spellings(x))
+df['text'] = df['text'].apply(lambda text: clean_text(text))
+df[df['text'] == ''] = 'void'
 
-df.to_csv('data/treated.csv')
+df.to_csv('data/treated_2.csv')
