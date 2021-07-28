@@ -9,8 +9,6 @@ from sklearn.model_selection import train_test_split
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from transformers import BertTokenizer, TFBertModel, TFTrainer, TFTrainingArguments
 
-tf.keras.backend.set_floatx('float16')
-
 # データを読み込む
 data = pd.read_csv('data/treated.csv')
 
@@ -23,7 +21,7 @@ test = data[data.isnull().any(1)]
 test_text = test['text']
 
 # BERT用のエンコーダーを読み込む
-tokenizer = BertTokenizer.from_pretrained('bert-large-uncased')
+tokenizer = BertTokenizer.from_pretrained('distilbert-base-uncased')
 
 # テキストを BERT 用にエンコーディング
 train_encodings = tokenizer(train_text.to_list(),
@@ -51,14 +49,14 @@ train_ids, train_att = encode_tf_layers(train_encodings)
 test_ids, test_att = encode_tf_layers(test_encoding)
 
 # BERT のモデルを読み込む
-bert_model = TFBertModel.from_pretrained("bert-large-uncased")
+bert_model = TFBertModel.from_pretrained('distilbert-base-uncased')
 
 # モデル構築
 input = tf.keras.Input(shape=(100,), dtype='int32')
 attention_masks = tf.keras.Input(shape=(100,), dtype='int32')
 output = bert_model([input, attention_masks])
 output = output[1]
-output = tf.keras.layers.Dense(32, activation='relu')(output)
+output = tf.keras.layers.Dense(2, activation='relu')(output)
 output = tf.keras.layers.Dropout(0.2)(output)
 output = tf.keras.layers.Dense(1, activation='sigmoid')(output)
 model = tf.keras.models.Model(
@@ -75,6 +73,7 @@ model.compile(
 history = model.fit(
     [train_ids, train_att], train_label,
     epochs=2,
+    batch_size=1,
     validation_split=0.2,
     callbacks=[
         EarlyStopping(monitor='loss', min_delta=0,
