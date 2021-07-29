@@ -14,23 +14,23 @@ data = pd.read_csv('data/treated.csv')
 
 # 訓練用データを取得
 train = data.dropna(subset=['target'])
-train_text, train_label = train['text'], train['target']
+train_texts, train_labels = train['text'], train['target']
 
 # テスト用データを取得
-test = data[data.isnull().any(1)]
-test_text = test['text']
+test = data[data['target'].isnull()]
+test_texts = test['text']
 
 # BERT用のエンコーダーを読み込む
 tokenizer = BertTokenizer.from_pretrained('distilbert-base-uncased')
 
 # テキストを BERT 用にエンコーディング
-train_encodings = tokenizer(train_text.to_list(),
+train_encodings = tokenizer(test_texts.to_list(),
                             padding='max_length',
                             truncation=False,
                             return_attention_mask=True,
                             max_length=100)
 
-test_encoding = tokenizer(test_text.to_list(),
+test_encoding = tokenizer(test_texts.to_list(),
                           padding='max_length',
                           truncation=False,
                           return_attention_mask=True,
@@ -71,7 +71,7 @@ model.compile(
 )
 
 history = model.fit(
-    [train_ids, train_att], train_label,
+    [train_ids, train_att], train_labels,
     epochs=2,
     batch_size=1,
     validation_split=0.2,
@@ -89,7 +89,7 @@ history = model.fit(
 
 # 推論
 predict = model.predict([test_ids, test_att])
-opredict = np.round(predict).astype(int).reshape(-1)
+opredict = np.round(predict).astype(int)
 test_df = pd.read_csv('data/test.csv')
 sub = pd.DataFrame({'id': test_df['id'].values.tolist(), 'target': predict})
 sub.to_csv('result/result_bert.csv', index=False)

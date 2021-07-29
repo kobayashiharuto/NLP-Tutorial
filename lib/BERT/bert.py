@@ -14,15 +14,15 @@ data = pd.read_csv('data/treated.csv')
 
 # 訓練用データを取得
 train = data.dropna(subset=['target'])
-train_text, train_label = train['text'], train['target']
+train_texts, train_labels = train['text'], train['target']
 
 # テスト用データを取得
-test = data[data.isnull().any(1)]
-test_text = test['text']
+test = data[data['target'].isnull()]
+test_texts = test['text']
 
 # 訓練用データを訓練用と評価用に分ける
 x_train, x_val, y_train, y_val =\
-    train_test_split(train_text, train_label, test_size=0.15)
+    train_test_split(train_texts, train_labels, test_size=0.15)
 
 # 各データをDatasetに変換
 train_ds = tf.data.Dataset.from_tensor_slices((x_train, y_train))

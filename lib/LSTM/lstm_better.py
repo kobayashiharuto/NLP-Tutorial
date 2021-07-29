@@ -21,7 +21,7 @@ train = data.dropna(subset=['target'])
 train_texts, train_labels = train['text'], train['target']
 
 # テスト用データを取得
-test = data[data.isnull().any(1)]
+test = data[data['target'].isnull()]
 test_texts = test['text']
 
 # 埋め込み用の辞書を取得
@@ -106,9 +106,7 @@ model.fit(
 
 # 推論
 predict = model.predict(test_pad)
-predict = (predict > 0.5).astype('int32').reshape(3263)
-print(predict)
-print(predict.shape)
+predict = (predict > 0.5).astype(int)
 
 # CSV に出力
 sample_data = pd.read_csv('data/sample_submission.csv')
