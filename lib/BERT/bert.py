@@ -27,7 +27,7 @@ x_train, x_val, y_train, y_val =\
 # 各データをDatasetに変換
 train_ds = tf.data.Dataset.from_tensor_slices((x_train, y_train))
 val_ds = tf.data.Dataset.from_tensor_slices((x_val, y_val))
-test_ds = tf.data.Dataset.from_tensor_slices((test_text))
+test_ds = tf.data.Dataset.from_tensor_slices((test_texts))
 
 # データをバッチ化
 train_ds = train_ds.batch(10)
