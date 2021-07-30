@@ -63,10 +63,8 @@ word_to_index = tokenizer_obj.word_index
 # ユニークな単語数を取得しておく
 num_words = len(word_to_index) + 1
 
-# 埋め込み用のベクトルを用意
-embedding_matrix = np.zeros((num_words, 100))
-
 # 単語を回しながらインデックスに対応したベクトル表現の配列を作成する
+embedding_matrix = np.zeros((num_words, 100))
 for word, i in tqdm(word_to_index.items()):
     emb_vec = embedding_dict.get(word)
     if emb_vec is not None:
@@ -86,7 +84,8 @@ model = Sequential([
     Embedding(num_words, 100, embeddings_initializer=Constant(
         embedding_matrix), input_length=MAX_LEN, trainable=False),
     SpatialDropout1D(0.2),
-    LSTM(64),
+    Bidirectional(LSTM(64, return_sequences=True)),
+    Bidirectional(LSTM(64)),
     Dense(128, activation='relu', kernel_initializer='he_normal'),
     Dense(1, activation='sigmoid')
 ])
@@ -100,16 +99,26 @@ model.compile(
 # 学習
 model.fit(
     train_pad, train_labels,
-    epochs=7,
+    epochs=500,
     validation_split=0.2,
+    callbacks=[
+        EarlyStopping(monitor='loss', min_delta=0,
+                      patience=10, verbose=1),
+        ReduceLROnPlateau(monitor='val_accuracy',
+                          patience=3,
+                          verbose=1,
+                          factor=0.5,
+                          min_lr=0.0000001),
+        ModelCheckpoint('models/bert.h5', save_best_only=True)
+    ],
 )
 
 # 推論
 predict = model.predict(test_pad)
-predict = (predict > 0.5).astype(int)
+predict = (predict > 0.5).astype(int).reshape(-1)
 
 # CSV に出力
 sample_data = pd.read_csv('data/sample_submission.csv')
 submit_data = DataFrame(
     {'id': sample_data['id'].to_list(), 'target': predict.tolist()})
-submit_data.to_csv('result/result.csv')
+submit_data.to_csv('result/result.csv', index=False)

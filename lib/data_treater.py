@@ -15,10 +15,6 @@ def plot_graphs(history, metric):
     plt.show()
 
 
-train = pd.read_csv('data/train.csv')
-test = pd.read_csv('data/test.csv')
-
-
 def remove_punct(text):
     table = str.maketrans('', '', string.punctuation)
     return text.translate(table)
@@ -46,11 +42,8 @@ def remove_emoji(text):
     return emoji_pattern.sub(r'', text)
 
 
-spell = SpellChecker()
-
-
 def correct_spellings(text):
-    global spell
+    spell = SpellChecker()
     corrected_text = []
     misspelled_words = spell.unknown(text.split())
     for word in text.split():
@@ -61,7 +54,11 @@ def correct_spellings(text):
     return ' '.join(corrected_text)
 
 
+train = pd.read_csv('data/train.csv')
+test = pd.read_csv('data/test.csv')
+
 df = pd.concat([train, test])
+
 df['text'] = df['text'].apply(lambda x: remove_emoji(x))
 df['text'] = df['text'].apply(lambda x: remove_html(x))
 df['text'] = df['text'].apply(lambda x: remove_URL(x))
